@@ -1,4 +1,4 @@
-# SHOPYSOFT FOR DEVS
+# SHOPYSOFT FOR DEVELOPERS
 
 Shopysoft is Cloud based e-commerce functional website. 
 It is fully based on the the implementation of MVC nodeJs backend architecture. 
