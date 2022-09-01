@@ -3,7 +3,7 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../utils/database')
 
-const Cart = sequelize.defind('cart', {
+const Order = sequelize.defind('order', {
     id: {
        type: Sequelize.INTEGER,
        autoIncrement: true,
@@ -12,4 +12,4 @@ const Cart = sequelize.defind('cart', {
     }
 })
 
-module.exports = Cart;
+module.exports = Order;
