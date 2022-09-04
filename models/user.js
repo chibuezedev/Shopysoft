@@ -1,22 +1,25 @@
-const mongodb = require('mongodb')
-const getDb = require('../util/database').getDb;
+const mongoose = require('mongoose')
 
-const ObjectId = mongodb.ObjectId;
+const Schema = mongoose.Schema;
 
-class  User {
-    constructor (username, email, id, cart){
-        this.username = username;
-        this.email = email;
-        this._id = id;
-        this.cart = cart;
-    }
-    save(){
-     const db = getDb();
-    return db.collection('user').insertOne(this)
-    }
+const userSchema = new Schema({
+name:{
+    type: String,
+    required: true
+},
+email: {
+    type: String,
+    required: true
+},
+cart: {
+    items: [{productId: {type: Schema.Types.ObjectId, ref: 'Product'}},
+           {quantity: {type: Number, required: true}}]
+}
+})
 
-addToCart(product){
-    const cartProductIndex = this.cart.findIndex(cp => {
+
+userSchema.methods.addToCart = function (product) {
+       const cartProductIndex = this.cart.findIndex(cp => {
         return cp.productId.toString() === product._id.toString();
     })
 
@@ -28,32 +31,30 @@ addToCart(product){
         updatedCartItems[cartProductIndex].quantity = newQuantity;
     } else{
         updatedCartItems.push({
-            productId: new ObjectId(product._id),
+            productId: product._id,
             quantity: newQuantity
-        })
-    }
-
-    const updatedCart = {item: [{
-    productId: new ObjectId(product._id), quantity: 1}]};
-    const db = getDB();
-    return db
-    .collection('users')
-    .updateOne({ _id: new ObjectId(this.id)},
-    {$set: {cart: updatedCart}}
-    )
+        }) 
+  const updatedCart = {
+    items: updatedCartItems
+  }
+  this.cart = updatedCart
+  return this.save()
+}
 }
 
-    static findById(userId){
-    const db = getDb();
-    db.collection('user')
-    .findOne({ _id: new ObjectId(userId)})
-    .next()
-    .then(user => {
-        console.log(user)
-        return user;
+userSchema.methods.removeFromCart = function (productId){
+    const updatedCartItems = this.cart.items.filter(item => {
+        return item.productId.toString() !== productId.toString();
     })
-    .catch(err => {console.log(err)})
-    }
+    this.cart.items =updatedCartItems;
+    this.save()
 }
 
-module.exports = User;
+userSchema.methods.clearCart = function(){
+    this.cart = {items: []}
+    this.save();
+}
+
+
+module.exports = mongoose.model('User', userSchema)
+
