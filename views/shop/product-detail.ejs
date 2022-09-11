@@ -12,6 +12,7 @@
            <h2 class="product__price">$<%= product.price %></h2>
            <p><%= product.description %></p>
            <form action="/cart" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button type="submit" class="btn">Add to Cart</button>
             <input type="hidden" name="productId" value="<%= product._id %>">
            </form>

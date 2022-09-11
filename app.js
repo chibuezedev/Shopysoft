@@ -1,28 +1,55 @@
 const path = require('path');
+const mongoose = require('mongoose')
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const session = require('express-session')
+const MongoDBStore = require('connect-mongodb-session')(session);
+const csrf = require('csurf')
+const flash = require('connect-flash')
 
 const errorController = require('./controllers/error');
 const User = require('./models/user')
 
 
+MONGODB_URL = 'mongodb+srv://Paul:y9DSqyzD8uiQ9n8g@node-class.iz8y6zp.mongodb.net/?retryWrites=true&w=majority'
+
 const app = express();
+const store = new MongoDBStore({
+  uri: MONGODB_URL,
+  collection: 'sessions'
+});
+const csrfProtection = csrf();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
+app.set('trust proxy', 1) 
 
 
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
+const authRoutes = require('./routes/auth');
 
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: 'keyboard',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: true },
+  store: store
+}))
+app.use(csrfProtection)
+app.use(flash());
+
 
 app.use((req, res, next) => {
-  User.findById('')
+  if (!req.session.user){
+    return next();
+  }
+  User.findById(req.session.user._id)
   .then((user) => {
     req.user = user;
     next();
@@ -30,27 +57,26 @@ app.use((req, res, next) => {
   .catch(err => {console.log(err)})
 })
 
+app.use((req, res, next) => {
+res.locals.isAuthenticated = req.session.isLoggedIn;
+res.locals.csrfToken = req.session.csrfToken();
+next();
+});
+
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
+app.use(authRoutes);
 
 app.use(errorController.get404);
 
 
-mongoose.connect('mongodb+srv://Paul:y9DSqyzD8uiQ9n8g@node-class.iz8y6zp.mongodb.net/?retryWrites=true&w=majority')
+mongoose.connect(MONGODB_URL)
 .then( result => {
-  User.findOne().then(user => {
-    if (!user){
-      const user = new User({
-        name: 'Paul',
-        email: 'paul@gmail.com',
-        cart: []
-      })
-      return user.save();
-    }
-    app.listen(3000)
+    app.listen(3000, () => {
+     console.log('champ')
+    })
   }
   )
   .catch(err => {console.log(err)})
-}
-)
+
 

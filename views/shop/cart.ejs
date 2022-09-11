@@ -17,6 +17,7 @@
                         </li>
                         <br>
                         <form action="/create-order" method="POST">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                             <button class="btn" type="submit">Order Now</button>
                         </form>
                     <% }) %>
