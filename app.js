@@ -1,5 +1,6 @@
 const path = require('path');
 const mongoose = require('mongoose')
+require('dotenv').config()
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -12,11 +13,9 @@ const errorController = require('./controllers/error');
 const User = require('./models/user')
 
 
-MONGODB_URL = 'mongodb+srv://Paul:y9DSqyzD8uiQ9n8g@node-class.iz8y6zp.mongodb.net/?retryWrites=true&w=majority'
-
 const app = express();
 const store = new MongoDBStore({
-  uri: MONGODB_URL,
+  uri: process.env.MONGODB_URL,
   collection: 'sessions'
 });
 const csrfProtection = csrf();
@@ -70,7 +69,7 @@ app.use(authRoutes);
 app.use(errorController.get404);
 
 
-mongoose.connect(MONGODB_URL)
+mongoose.connect(process.env.MONGODB_URL)
 .then( result => {
     app.listen(3000, () => {
      console.log('champ')
