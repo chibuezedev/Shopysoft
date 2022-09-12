@@ -27,9 +27,9 @@
                                     </p>
                                 </div>
                                 <div class="card__actions">
-                                    <a class="btn" href="/products/<%= product._id %>">Details</a>
-                                    <% if (isAuthenticated) { %>                    
-                                    <%- include('../includes/add-to-cart', {product: product}) %>
+                                    <a href="/products/<%= product._id %>" class="btn">Details</a>
+                                    <% if (isAuthenticated) { %>
+                                        <%- include('../includes/add-to-cart.ejs', {product: product}) %>
                                     <% } %>
                                 </div>
                             </article>

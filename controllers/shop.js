@@ -12,9 +12,10 @@ exports.getIndex = (req, res, next) => {
       path: '/',
     });
   }).catch(err => {
-    console.log(err);
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
   })
-  
   }
 
 exports.getProducts = (req, res) => {
@@ -26,7 +27,11 @@ exports.getProducts = (req, res) => {
       path: '/products',
     });
   })
-  .catch(err => console.log(err))
+  .catch(err => {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
+  })
 }
 
 
@@ -40,8 +45,11 @@ exports.getProduct = (req, res, next) => {
         path: '/products',
       })
     }
-  ).catch(err => {console.log(err)})
-
+  ).catch(err => {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
+  })
 }
 
 
@@ -57,7 +65,11 @@ req.user
   products: products,
 });
 })
-.catch(err => {console.log(err)})
+.catch(err => {
+  const error = new Error(err)
+  error.httpStatusCode = 500
+  return next(error)
+})
 }
 
 
@@ -71,10 +83,12 @@ exports.postCart = (req, res, next) => {
     .then(result => {
      console.log(result)
      res.redirect('/cart')
-    }) .catch(err => {console.log(err)})
+    })
+  }) .catch(err => {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
   })
-
-  
 };
 
 
@@ -85,7 +99,11 @@ exports.postCartDelete = (req, res) => {
 .then( result =>{
   res.redirect('/cart');
 })
-.catch(err => {console.log(err)})
+.catch(err => {
+  const error = new Error(err)
+  error.httpStatusCode = 500
+  return next(error)
+})
 }
 
 
@@ -98,7 +116,9 @@ Order.find({'user.userId': req.user._Id})
       orders: orders
     });
   }).catch(err => {
-    console.log(err)
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
   })
 };
 
@@ -125,7 +145,11 @@ exports.postOrder = (req, res, next) => {
   .then(() => {
     res.redirect('/orders')
   })
-  .catch(err => {console.log(err)})
+  .catch(err => {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
+  })
 }
 
 

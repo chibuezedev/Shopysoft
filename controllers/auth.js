@@ -2,17 +2,18 @@ const User = require('./models/user')
 
 const sendgridTransport = require('nodemailer-sendgrid-transport')
 
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 
 const crypto = require('crypto')
 
-const { validationCheck } = require('express-validator/check')
+const { validationResult } = require('express-validator/check')
 
 const nodemailer = require('nodemailer')
 
 
 
-const transporter = nodemailer.createTransport(sendgridTransport({
+const transporter = nodemailer.createTransport(
+    sendgridTransport({
     auth: {
         api_key: ''
     }
@@ -42,7 +43,7 @@ exports.postSignup = (req, res, next) => {
    const email = req.body.email;
    const password = req.body.password;
 
-   const errors = validationCheck(req)
+   const errors = validationResult(req)
  if(!errors.isEmpty()) {
     console.log(errors.array())
     return res.status(422).render('auth/signup', {
@@ -76,6 +77,10 @@ exports.postSignup = (req, res, next) => {
             html: '<h1>You successfully signed up</h1>'
         }).catch(err => {
             console.log(err)
+        }).catch(err => {
+            const error = new Error(err)
+            error.httpStatusCode = 500
+            return next(error)
         })
    }) 
 } 
@@ -118,7 +123,7 @@ exports.postLogin = (req, res) => {
             validationErrors: errors.array()
         })
     }
-    User.findOne = ({email: email})
+    User.findOne({email: email})
     .then(user => {
         if(!user){
             return res.status(422).render('auth/login', {
@@ -133,8 +138,8 @@ exports.postLogin = (req, res) => {
             })
         }
         bcrypt.compare(password, user.password)
-        .then(isMatch => {
-            if(isMatch){
+        .then(doMatch => {
+            if(doMatch){
                 req.session.isLoggedIn = true;
                 req.session.user = user
                 return req.session.save(err => {
@@ -158,7 +163,11 @@ exports.postLogin = (req, res) => {
             res.redirect('/login')
         })
     })
-    .catch( err =>  console.log(err))
+    .catch( err =>  {
+        const error = new Error(err)
+        error.httpStatusCode = 500
+        return next(error)
+    })
 }
 
 
@@ -209,7 +218,11 @@ crypto.randomBytes(32, (err, buffer) => {
             </p>`
         })
     })
-    .catch(err => {console.log(err)})
+    .catch(err => {
+        const error = new Error(err)
+        error.httpStatusCode = 500
+        return next(error)
+    })
 })
 }
 
@@ -229,10 +242,15 @@ exports.getNewPassword = (req,res, next) => {
             pageTitle: 'New Password',
             path: '/new-password',
             errorMessage: message,
-            userId: user._id.toString()
+            userId: user._id.toString(),
+            passwordToken: token
         })
     })
-    .catch( err => {console.log(err)})
+    .catch( err => {
+        const error = new Error(err)
+        error.httpStatusCode = 500
+        return next(error)
+    })
 }
 
 
@@ -243,7 +261,11 @@ exports.postNewPassword =(req, res, next) => {
     const passwordToken = req.body.passwordToken;
     let resetUser;
 
-    User.findOne({resetToken: token, resetTokenExpiration: {$gt: Date.now()}, _id: userId})
+    User.findOne({
+        resetToken: passwordToken, 
+        resetTokenExpiration: {$gt: Date.now()},
+         _id: userId
+        })
     .then(user => {
         resetUser = user;
         return bcrypt.hash(newpassword, 12)
@@ -254,5 +276,9 @@ exports.postNewPassword =(req, res, next) => {
         return resetUser.save();
     }).then(result => {
         res.redirect('/login')
-    }).catch(err => {console.log(err)})
+    }).catch(err => {
+        const error = new Error(err)
+        error.httpStatusCode = 500
+        return next(error)
+    })
 }

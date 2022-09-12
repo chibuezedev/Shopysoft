@@ -18,11 +18,13 @@ const store = new MongoDBStore({
   uri: process.env.MONGODB_URL,
   collection: 'sessions'
 });
+store.on('error', function(error) {
+  console.log(error);
+});
 const csrfProtection = csrf();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
-app.set('trust proxy', 1) 
 
 
 const adminRoutes = require('./routes/admin');
@@ -50,15 +52,18 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
   .then((user) => {
+    if(!user){
+      return next();
+    }
     req.user = user;
     next();
   })
-  .catch(err => {console.log(err)})
+  .catch(err => { throw new Error(err)})
 })
 
 app.use((req, res, next) => {
 res.locals.isAuthenticated = req.session.isLoggedIn;
-res.locals.csrfToken = req.session.csrfToken();
+res.locals.csrfToken = req.csrfToken();
 next();
 });
 
@@ -68,12 +73,19 @@ app.use(authRoutes);
 
 app.use(errorController.get404);
 
+app.use((error, req, res, next) => {
+  
+  res.status(500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.isLoggedIn 
+  });
+})
+
 
 mongoose.connect(process.env.MONGODB_URL)
 .then( result => {
-    app.listen(3000, () => {
-     console.log('champ')
-    })
+    app.listen(3000)
   }
   )
   .catch(err => {console.log(err)})

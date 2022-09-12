@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
     "connect-flash": "^0.1.1",
     "connect-mongodb-session": "^3.1.1",
@@ -28,6 +29,7 @@
     "flash": "^1.1.0",
     "mongodb": "^4.9.1",
     "mongoose": "^6.5.4",
+    "nodemailer": "^6.7.8",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "pug": "^2.0.3"
   }
