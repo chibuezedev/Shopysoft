@@ -1,5 +1,7 @@
 const Product = require('../models/product');
 
+const fileHelper = require('../util/file')
+
 const { validationResult } = require('express-validator/check')
 
 exports.getAddProduct = (req, res, next) => {
@@ -152,9 +154,13 @@ Product.findById(prodId)
     return res.redirect('/');
   }
   product.title = updatedTitle,
-  product.imageUrl = updatedImageURL,
   product.price = updatedPrice,
   product.description = updatedDesc
+
+ if(image){
+  fileHelper.deletefile(product.imageUrl)
+  product.imageUrl = image.path;
+ }
 
   return product.save().then( result => {
     console.log('UPDATED')
@@ -170,8 +176,18 @@ Product.findById(prodId)
 
 
 exports.postDeleteProduct = (req, res, next) => {
+
  const prodId = req.body.productId;
- Product.deleteOne({_id: prodId, userId: req.user._id})
+
+ Product.findById(prodId)
+ .then(product => {
+  if(!product){
+   return next(new Error('Product not found'))
+  }
+  fileHelper.deletefile(product.imageUrl)
+  return  Product.deleteOne({_id: prodId, userId: req.user._id})
+ })
+ 
 .then(() => {
   console.log('DELETED')
   res.redirect('/admin/products')
@@ -181,4 +197,6 @@ exports.postDeleteProduct = (req, res, next) => {
   error.httpStatusCode = 500
   return next(error)
  });
+
+
 }

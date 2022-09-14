@@ -1,4 +1,4 @@
-const User = require('./models/user')
+const User = require('../models/user')
 
 const sendgridTransport = require('nodemailer-sendgrid-transport')
 

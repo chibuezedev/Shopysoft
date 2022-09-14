@@ -121,9 +121,13 @@ app.use((error, req, res, next) => {
 })
 
 //database connection
+const port = process.env.PORT || 3000; 
+
 mongoose.connect(process.env.MONGODB_URL)
 .then( result => {
-    app.listen(3000)
+    app.listen(3000, () => {
+      console.log(`Listening at port ${port}...`)
+    })
   }
   )
   .catch(err => {console.log(err)})
