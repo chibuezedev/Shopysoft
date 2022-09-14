@@ -9,11 +9,11 @@ const ITEMS_PER_PAGE = 2; //pagination
 
 
 exports.getIndex = (req, res, next) => {
-  const page = req.query.page;
+  const page = +req.query.page || 1;
   let totalItems;
 
   Product.find()
-  .countDocment()
+  .countDocments()
   .then( numberProducts =>{
     totalItems = numberProducts;
     return  Product.find()
@@ -25,7 +25,7 @@ exports.getIndex = (req, res, next) => {
       prods: products,
       pageTitle: 'Shop',
       path: '/',
-      totalProducts: totalItems,
+      currentPage: page,
       hasNextPage: ITEMS_PER_PAGE * page < totalItems,
       nextPage: page + 1,
       PreviousPage: page - 1,
@@ -39,21 +39,35 @@ exports.getIndex = (req, res, next) => {
   }
 
 exports.getProducts = (req, res) => {
+  const page = +req.query.page || 1;
+  let totalItems;
+
   Product.find()
-  .then(products => {
+  .countDocments()
+  .then( numberProducts =>{
+    totalItems = numberProducts;
+    return  Product.find()
+    .skip((page - 1) * ITEMS_PER_PAGE)
+    .limit( ITEMS_PER_PAGE)
+
+  }).then( products => {
     res.render('shop/product-list', {
       prods: products,
       pageTitle: 'All Products',
       path: '/products',
-    });
-  })
+      currentPage: page,
+      hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+      nextPage: page + 1,
+      PreviousPage: page - 1,
+      lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE)
+    })
   .catch(err => {
     const error = new Error(err)
     error.httpStatusCode = 500
     return next(error)
   })
+})
 }
-
 
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
@@ -144,9 +158,16 @@ Order.find({'user.userId': req.user._Id})
 
 
 exports.postOrder = (req, res, next) => {
+
+  const token = req.body.stripeToken;
+  let totalSum = 0;
+
   req.user
   .populate('cart.items.productId').execPopulate()
   .then( user => {
+    user.cart.items.forEach(p => {
+      totalSum += p.quantity * p.productId.price;
+    })
    const products = user.cart.items.map(i => {
     return {quantity: i.quantity, product: {...i.productId._doc}}
    })
@@ -160,6 +181,13 @@ exports.postOrder = (req, res, next) => {
    return order.save();
     
   }).then( result => {
+    const charge = stripe.charges.create({
+      amount: totalSum * 100,
+      currency: 'usd',
+      description: 'Demo payment',
+      source: token,
+      metaData: {order_id: result._id.toString()}
+    })
      return req.user.clearCart();
   })
   .then(() => {
@@ -174,10 +202,27 @@ exports.postOrder = (req, res, next) => {
 
 
 exports.getCheckout = (req, res, next) => {
-  res.render('shop/checkout', {
+  req.user
+  .populate('cart.items.productId')
+  .exec()
+  .then( user => {
+    const products = user.cart.items
+    let total = 0 ;
+    products.forEach(p => {
+      total += p.quantity * p.productId.price;
+    })
+    res.render('shop/checkout', {
     path: '/checkout',
-    pageTitle: 'Checkout'
+    pageTitle: 'Checkout',
+    products: products,
+    totalSum: total
   });
+  })
+  .catch(err => {
+    const error = new Error(err)
+    error.httpStatusCode = 500
+    return next(error)
+  })
 };
 
 

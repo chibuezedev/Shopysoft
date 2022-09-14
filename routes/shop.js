@@ -20,8 +20,6 @@ router.post('/delete-cart', Auth, shopController.postCartDelete)
 
 router.get('/orders', Auth, shopController.getOrder);
 
-router.post('/orders', Auth, shopController.postOrder)
-
 router.get('/checkout', Auth, shopController.getCheckout);
 
 router.get('/orders/:orderId', Auth, shopController.getInvoice)

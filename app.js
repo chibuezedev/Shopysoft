@@ -13,6 +13,8 @@ const multer  = require('multer')
 
 
 const errorController = require('./controllers/error');
+const shopController = require('./controllers/shop');
+const Auth = require('./middleware/is-auth')
 const User = require('./models/user')
 
 
@@ -78,7 +80,7 @@ app.use(session({
   cookie: { secure: true },
   store: store
 }))
-app.use(csrfProtection)
+
 app.use(flash());
 
 //registering users on signup
@@ -99,11 +101,19 @@ app.use((req, res, next) => {
 
 //session middleware
 app.use((req, res, next) => {
-res.locals.isAuthenticated = req.session.isLoggedIn;
-res.locals.csrfToken = req.csrfToken();
-next();
-});
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken()
+  next();
+  });
 
+app.post('/orders', Auth, shopController.postOrder)
+
+
+app.use(csrfProtection)
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken();
+  next();
+  });
 //middleware registration
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
